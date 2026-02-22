@@ -7,53 +7,67 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ES Module için __dirname
+// ES Module __dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// .well-known klasörünü public yap
+// Domain verification için
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
 
-// POST /analyze_conflict
-app.post("/analyze_conflict", (req, res) => {
-  const { conflict_name } = req.body;
-  const structuredResponse = `
-1. Strategic Objective
-Explain the primary objective of ${conflict_name}.
+// MCP JSON-RPC endpoint (ROOT)
+app.post("/", (req, res) => {
+  const { method, id, params } = req.body;
 
-2. Force Balance
-Describe the relative military strength.
+  // MCP tool list request
+  if (method === "tools/list") {
+    return res.json({
+      jsonrpc: "2.0",
+      id,
+      result: {
+        tools: [
+          {
+            name: "analyze_conflict",
+            description: "Analyze a military conflict in structured format",
+            input_schema: {
+              type: "object",
+              properties: {
+                conflict_name: { type: "string" }
+              },
+              required: ["conflict_name"]
+            }
+          }
+        ]
+      }
+    });
+  }
 
-3. Logistics Sustainability
-Assess supply and sustainability factors.
+  // MCP tool call
+  if (method === "tools/call") {
+    const conflict = params?.arguments?.conflict_name;
 
-4. Operational Tempo
-Analyze maneuver speed and initiative.
+    return res.json({
+      jsonrpc: "2.0",
+      id,
+      result: {
+        content: [
+          {
+            type: "text",
+            text: `Strategic analysis of ${conflict}`
+          }
+        ]
+      }
+    });
+  }
 
-5. Breaking Point
-Identify decisive turning points.
-
-6. Strategic Lesson
-Summarize key strategic insights.
-  `;
-  res.json({ result: structuredResponse });
-});
-
-// GET /list_tools (MCP taraması için)
-app.get("/list_tools", (req, res) => {
-  res.json({
-    tools: [
-      {
-        name: "analyze_conflict",
-        description: "Analyze a military conflict in structured format",
-        input: { conflict_name: "string" },
-        output: { result: "string" },
-      },
-    ],
+  // Default fallback
+  res.status(400).json({
+    jsonrpc: "2.0",
+    id,
+    error: { code: -32601, message: "Method not found" }
   });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`MCP Server running on port ${PORT}`);
 });
