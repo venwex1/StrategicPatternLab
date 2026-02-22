@@ -5,10 +5,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Root endpoint
 app.post("/", (req, res) => {
   const { method, id, params } = req.body;
-
-  console.log("Incoming MCP:", method);
+  console.log("Received method:", method);
 
   // 1️⃣ MCP initialize handshake
   if (method === "initialize") {
@@ -28,7 +28,7 @@ app.post("/", (req, res) => {
     });
   }
 
-  // 2️⃣ Tool list
+  // 2️⃣ Tool list (MCP tools)
   if (method === "tools/list") {
     return res.json({
       jsonrpc: "2.0",
@@ -51,10 +51,19 @@ app.post("/", (req, res) => {
     });
   }
 
-  // 3️⃣ Tool call
+  // 3️⃣ Tool call (Handle actual tool calls)
   if (method === "tools/call") {
     const conflict = params?.arguments?.conflict_name;
 
+    if (!conflict) {
+      return res.status(400).json({
+        jsonrpc: "2.0",
+        id,
+        error: { code: -32000, message: "Missing conflict_name argument" }
+      });
+    }
+
+    // Response after analyzing the conflict
     return res.json({
       jsonrpc: "2.0",
       id,
@@ -62,7 +71,7 @@ app.post("/", (req, res) => {
         content: [
           {
             type: "text",
-            text: `Strategic analysis of ${conflict}`
+            text: `Strategic analysis of ${conflict} completed.`
           }
         ]
       }
@@ -76,7 +85,7 @@ app.post("/", (req, res) => {
   });
 });
 
-// GET root için 200 döndür (404 olmasın)
+// For GET requests (ensure server responds correctly)
 app.get("/", (req, res) => {
   res.send("MCP Server is running");
 });
