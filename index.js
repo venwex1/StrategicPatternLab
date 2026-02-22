@@ -5,7 +5,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Root endpoint
 app.post("/", (req, res) => {
   const { method, id, params } = req.body;
   console.log("Received method:", method);
@@ -59,7 +58,7 @@ app.post("/", (req, res) => {
       return res.status(400).json({
         jsonrpc: "2.0",
         id,
-        error: { code: -32000, message: "Missing conflict_name argument" }
+        error: { code: -32000, message: "Missing required argument: conflict_name" }
       });
     }
 
@@ -78,6 +77,7 @@ app.post("/", (req, res) => {
     });
   }
 
+  // Handle unknown methods (default fallback)
   return res.status(400).json({
     jsonrpc: "2.0",
     id,
