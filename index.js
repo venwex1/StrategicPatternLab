@@ -1,21 +1,20 @@
 import express from "express";
 import cors from "cors";
-import path from "path"; // <-- ekledik
-import { fileURLToPath } from "url"; // ES Module için gerekli
+import path from "path"; 
+import { fileURLToPath } from "url";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ES Module için __dirname tanımı
+// ES Module için __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ----------------------------
 // .well-known klasörünü public yap
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
-// ----------------------------
 
+// POST /analyze_conflict
 app.post("/analyze_conflict", async (req, res) => {
   const { conflict_name } = req.body;
 
@@ -40,6 +39,20 @@ Summarize key strategic insights.
   `;
 
   res.json({ result: structuredResponse });
+});
+
+// GET /list_tools (MCP taraması için)
+app.get("/list_tools", (req, res) => {
+  res.json({
+    tools: [
+      {
+        name: "analyze_conflict",
+        description: "Analyze a military conflict in structured format",
+        input: { conflict_name: "string" },
+        output: { result: "string" },
+      },
+    ],
+  });
 });
 
 const PORT = process.env.PORT || 3000;
