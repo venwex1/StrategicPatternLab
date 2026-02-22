@@ -1,15 +1,24 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url"; // ES Module için gerekli
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ES Module için __dirname tanımı
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// .well-known klasörünü public yap
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
+
+// ----------------------------
+// MCP Initialize handshake (basit başlangıç kontrolü)
 app.post("/", (req, res) => {
   const { method, id, params } = req.body;
-  console.log("Received method:", method);
 
-  // 1️⃣ MCP initialize handshake
   if (method === "initialize") {
     return res.json({
       jsonrpc: "2.0",
@@ -27,7 +36,8 @@ app.post("/", (req, res) => {
     });
   }
 
-  // 2️⃣ Tool list (MCP tools)
+  // ----------------------------
+  // tools/list endpoint'ini doğru tanımladık
   if (method === "tools/list") {
     return res.json({
       jsonrpc: "2.0",
@@ -50,19 +60,21 @@ app.post("/", (req, res) => {
     });
   }
 
-  // 3️⃣ Tool call (Handle actual tool calls)
+  // ----------------------------
+  // tools/call metodu (conflict_name parametresi ile gelen istekleri işliyoruz)
   if (method === "tools/call") {
     const conflict = params?.arguments?.conflict_name;
-
     if (!conflict) {
       return res.status(400).json({
         jsonrpc: "2.0",
         id,
-        error: { code: -32000, message: "Missing required argument: conflict_name" }
+        error: {
+          code: -32000,
+          message: "Missing required argument: conflict_name"
+        }
       });
     }
 
-    // Response after analyzing the conflict
     return res.json({
       jsonrpc: "2.0",
       id,
@@ -77,7 +89,6 @@ app.post("/", (req, res) => {
     });
   }
 
-  // Handle unknown methods (default fallback)
   return res.status(400).json({
     jsonrpc: "2.0",
     id,
@@ -85,7 +96,8 @@ app.post("/", (req, res) => {
   });
 });
 
-// For GET requests (ensure server responds correctly)
+// ----------------------------
+// GET / (Test ve Debug endpoint)
 app.get("/", (req, res) => {
   res.send("MCP Server is running");
 });
