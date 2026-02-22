@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import path from "path"; 
+import path from "path";
 import { fileURLToPath } from "url";
 
 const app = express();
@@ -15,9 +15,8 @@ const __dirname = path.dirname(__filename);
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known')));
 
 // POST /analyze_conflict
-app.post("/analyze_conflict", async (req, res) => {
+app.post("/analyze_conflict", (req, res) => {
   const { conflict_name } = req.body;
-
   const structuredResponse = `
 1. Strategic Objective
 Explain the primary objective of ${conflict_name}.
@@ -37,7 +36,6 @@ Identify decisive turning points.
 6. Strategic Lesson
 Summarize key strategic insights.
   `;
-
   res.json({ result: structuredResponse });
 });
 
